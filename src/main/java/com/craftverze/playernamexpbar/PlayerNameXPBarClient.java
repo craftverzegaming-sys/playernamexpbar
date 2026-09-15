@@ -3,6 +3,7 @@ package com.craftverze.playernamexpbar;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 
 public class PlayerNameXPBarClient implements ClientModInitializer {
 
@@ -15,33 +16,36 @@ public class PlayerNameXPBarClient implements ClientModInitializer {
             if (client.textRenderer == null || client.options.hudHidden) return;
 
             try {
-                // Temporarily hide vanilla XP level number (Minecraft hides level numbers when level is 0)
-                int realXpLevel = client.player.experienceLevel;
-                client.player.experienceLevel = 0;
-
+                TextRenderer textRenderer = client.textRenderer;
                 String playerName = client.player.getName().getString();
-                int textWidth = client.textRenderer.getWidth(playerName);
+                int textWidth = textRenderer.getWidth(playerName);
 
                 int screenWidth = drawContext.getScaledWindowWidth();
                 int screenHeight = drawContext.getScaledWindowHeight();
 
                 int x = (screenWidth - textWidth) / 2;
-                int y = screenHeight - 36; // Positioned right above the XP bar
+                int y = screenHeight - 36;
+
+                // 1. Wipe out the vanilla XP number behind it
+                // We draw a compact filled rect centered right over where vanilla draws the level
+                int clearWidth = Math.max(textWidth, 20);
+                int clearX1 = (screenWidth - clearWidth) / 2 - 2;
+                int clearX2 = (screenWidth + clearWidth) / 2 + 2;
+                
+                // Draw a 0-alpha clear mask / black strip to scrub the number
+                drawContext.fill(clearX1, y - 1, clearX2, y + 9, 0xFF000000);
 
                 int xpGreenColor = 0x80FF20;
                 int outlineColor = 0x000000;
 
-                // 1. Render 4-way black outline
-                drawContext.drawText(client.textRenderer, playerName, x - 1, y, outlineColor, false);
-                drawContext.drawText(client.textRenderer, playerName, x + 1, y, outlineColor, false);
-                drawContext.drawText(client.textRenderer, playerName, x, y - 1, outlineColor, false);
-                drawContext.drawText(client.textRenderer, playerName, x, y + 1, outlineColor, false);
+                // 2. Render 4-way black outline
+                drawContext.drawText(textRenderer, playerName, x - 1, y, outlineColor, false);
+                drawContext.drawText(textRenderer, playerName, x + 1, y, outlineColor, false);
+                drawContext.drawText(textRenderer, playerName, x, y - 1, outlineColor, false);
+                drawContext.drawText(textRenderer, playerName, x, y + 1, outlineColor, false);
 
-                // 2. Render Player Name in XP Green
-                drawContext.drawText(client.textRenderer, playerName, x, y, xpGreenColor, false);
-
-                // Restore real XP level for game mechanics
-                client.player.experienceLevel = realXpLevel;
+                // 3. Render Name in Green
+                drawContext.drawText(textRenderer, playerName, x, y, xpGreenColor, false);
 
             } catch (Throwable ignored) {
             }
