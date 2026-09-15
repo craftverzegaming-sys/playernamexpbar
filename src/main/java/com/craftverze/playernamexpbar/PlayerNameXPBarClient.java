@@ -26,7 +26,7 @@ public class PlayerNameXPBarClient implements ClientModInitializer {
                 int x = (drawContext.getScaledWindowWidth() - client.textRenderer.getWidth(playerName)) / 2;
                 int y = drawContext.getScaledWindowHeight() - 36;
 
-                // 0xFFFFFFFF includes full alpha channel (ARGB) required in 1.21.11+
+                // 0xFFFFFFFF (white with 100% alpha), shadow = true
                 drawContext.drawText(client.textRenderer, Text.literal(playerName), x, y, 0xFFFFFFFF, true);
             } catch (Exception ignored) {
                 // Catches frame execution drops safely
