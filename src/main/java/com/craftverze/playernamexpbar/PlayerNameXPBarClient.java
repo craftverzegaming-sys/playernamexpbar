@@ -3,6 +3,7 @@ package com.craftverze.playernamexpbar;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 
 public class PlayerNameXPBarClient implements ClientModInitializer {
 
@@ -15,39 +16,34 @@ public class PlayerNameXPBarClient implements ClientModInitializer {
             if (client.textRenderer == null || client.options.hudHidden) return;
 
             try {
+                // 1. Temporarily erase XP level text so vanilla doesn't render numbers
+                int realExperienceLevel = client.player.experienceLevel;
+                client.player.experienceLevel = 0; 
+
                 String playerName = client.player.getName().getString();
-
                 int textWidth = client.textRenderer.getWidth(playerName);
-                int screenWidth = drawContext.getScaledWindowWidth();
-                int screenHeight = drawContext.getScaledWindowHeight();
-
-                int x = (screenWidth - textWidth) / 2;
-                int y = screenHeight - 36; // Exact position centered above XP bar
-
-                // Hide vanilla XP number background zone by filling overlay rectangle
-                int boxPadding = 12;
-                drawContext.fill(
-                    (screenWidth / 2) - boxPadding, 
-                    y - 2, 
-                    (screenWidth / 2) + boxPadding, 
-                    y + 10, 
-                    0x00000000 // Blends cleanly into HUD background
-                );
+                
+                // Centered horizontally, positioned right in the gap above the XP bar
+                int x = (drawContext.getScaledWindowWidth() - textWidth) / 2;
+                int y = drawContext.getScaledWindowHeight() - 36; 
 
                 int xpGreenColor = 0x80FF20;
                 int outlineColor = 0x000000;
 
-                // 1. Draw 4-way black outline matching native XP text
+                // 2. Draw 4-directional black outline (matching vanilla XP text)
                 drawContext.drawText(client.textRenderer, playerName, x - 1, y, outlineColor, false);
                 drawContext.drawText(client.textRenderer, playerName, x + 1, y, outlineColor, false);
                 drawContext.drawText(client.textRenderer, playerName, x, y - 1, outlineColor, false);
                 drawContext.drawText(client.textRenderer, playerName, x, y + 1, outlineColor, false);
 
-                // 2. Draw player name in XP Green
+                // 3. Draw main player name in XP Green
                 drawContext.drawText(client.textRenderer, playerName, x, y, xpGreenColor, false);
 
+                // Restore true player experience level state for gameplay math
+                client.player.experienceLevel = realExperienceLevel;
+
             } catch (Throwable ignored) {
-                // Catches rendering exceptions gracefully
+                // Prevent HUD rendering exceptions
             }
         });
     }
