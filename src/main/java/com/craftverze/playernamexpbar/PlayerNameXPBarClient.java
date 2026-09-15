@@ -12,7 +12,6 @@ public class PlayerNameXPBarClient implements ClientModInitializer {
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
             MinecraftClient client = MinecraftClient.getInstance();
 
-            // Strict safety guards to prevent NullPointer crashes on world loading
             if (client == null || client.player == null || client.world == null) {
                 return;
             }
@@ -27,9 +26,10 @@ public class PlayerNameXPBarClient implements ClientModInitializer {
                 int x = (drawContext.getScaledWindowWidth() - client.textRenderer.getWidth(playerName)) / 2;
                 int y = drawContext.getScaledWindowHeight() - 36;
 
-                drawContext.drawTextWithShadow(client.textRenderer, Text.literal(playerName), x, y, 0xFFFFFF);
+                // 0xFFFFFFFF includes full alpha channel (ARGB) required in 1.21.11+
+                drawContext.drawText(client.textRenderer, Text.literal(playerName), x, y, 0xFFFFFFFF, true);
             } catch (Exception ignored) {
-                // Prevents frame render errors from crashing the whole game
+                // Catches frame execution drops safely
             }
         });
     }
